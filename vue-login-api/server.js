@@ -26,13 +26,15 @@ const User = mongoose.model("User", UserSchema);
 
 // Definieer Order Schema en Model
 const OrderSchema = new mongoose.Schema({
-  customerName: String,
-  email: String,
-  address: String,
-  configuration: Object, // Productconfiguratie (zoals kleur, maat, enz.)
-  status: { type: String, default: "new" }, // Status van de bestelling
-  createdAt: { type: Date, default: Date.now },
-});
+    customerName: String,
+    email: String,
+    address: String,
+    size: String, // Voeg maat toe
+    configuration: Object,
+    status: { type: String, default: "new" },
+    createdAt: { type: Date, default: Date.now },
+  });
+  
 const Order = mongoose.model("Order", OrderSchema);
 
 // Voeg standaard admin-gebruiker toe bij het opstarten van de server
@@ -106,6 +108,17 @@ app.post('/api/orders', async (req, res) => {
   }
 });
 
+app.post('/api/orders', async (req, res) => {
+    try {
+      const { customerName, email, address, size, configuration } = req.body;
+      const newOrder = new Order({ customerName, email, address, size, configuration });
+      await newOrder.save();
+      res.status(201).json({ message: "Order created successfully", order: newOrder });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to create order", error });
+    }
+  });
+
 // Haal alle bestellingen op
 app.get('/api/orders', async (req, res) => {
   try {
@@ -116,10 +129,65 @@ app.get('/api/orders', async (req, res) => {
   }
 });
 
+app.patch('/api/orders/:id', async (req, res) => {
+    try {
+      const { status } = req.body;
+      const updatedOrder = await Order.findByIdAndUpdate(req.params.id, { status }, { new: true });
+      res.status(200).json(updatedOrder);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update order", error });
+    }
+  });
 
+  const mongoose = require('mongoose');
+
+  const mongoose = require('mongoose');
+
+  const mongoose = require('mongoose');
+
+  app.patch('/api/orders/:id', async (req, res) => {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ message: "Invalid order ID format" });
+    }
+  
+    try {
+      console.log("Valid Order ID:", req.params.id); // Log de ID
+      const { status } = req.body;
+  
+      const updatedOrder = await Order.findByIdAndUpdate(
+        req.params.id,
+        { status },
+        { new: true }
+      );
+  
+      if (!updatedOrder) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+  
+      res.status(200).json(updatedOrder);
+    } catch (error) {
+      console.error("Error updating order:", error);
+      res.status(500).json({ message: "Failed to update order", error });
+    }
+  });
+  
+
+  
+  
+  app.delete('/api/orders/:id', async (req, res) => {
+    try {
+      await Order.findByIdAndDelete(req.params.id);
+      res.status(200).json({ message: "Order successfully deleted" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete order", error });
+    }
+  });
+
+
+  
+  
 
 // Start de server
 app.listen(3000, () => {
   console.log('API running on http://localhost:3000');
 });
-
